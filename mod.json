@@ -1,0 +1,27 @@
+{
+	"geode": "5.11.2",
+	"gd": {
+		"win": "2.2081",
+		"android": "2.2081",
+		"mac": "2.2081",
+		"ios": "2.2081"
+	},
+	"id": "lexsungd.click_detector",
+	"version": "1.0.0",
+	"name": "Click Detector",
+	"developer": "LexSunGD",
+	"description": "description",
+	"repository": "githubcom",
+	"tags": [],
+	"settings": {
+        "intensidad-ticks": {
+            "name": "Intensidad",
+            "description": "Margen de ticks",
+            "type": "int",
+            "default": 5,
+            "min": 0,
+            "max": 15,
+            "control": "slider"
+        }
+    }
+}
