@@ -1,55 +1,49 @@
 #include <Geode/Geode.hpp>
 #include <Geode/modify/PlayerObject.hpp>
 #include <Geode/binding/PlayLayer.hpp>
-#include <Geode/binding/GameLevelManager.hpp>
 
 using namespace geode::prelude;
 
-// Cambiamos el Hook para que afecte directamente al objeto del Jugador
+// Hook directo al objeto del jugador para interceptar inputs
 class $modify(MyPlayerObject, PlayerObject) {
     
-    // En la 2.2, pushButton pertenece a PlayerObject y devuelve un bool
     bool pushButton(PlayerButton button) {
-        
-        // 1. LEER LA INTENSIDAD DESDE EL MOD.JSON EN TIEMPO REAL
+        // 1. LEER LA INTENSIDAD DESDE EL MOD.JSON
         int64_t intensidadTicks = Mod::get()->getSettingValue<int64_t>("intensidad-ticks");
 
-        // 2. OBTENER TICK ACTUAL DEL MOTOR DE FÍSICAS (240Hz)
-        int tickOriginal = GameLevelManager::sharedState()->getPhysicsTick();
-
-        // Obtenemos la capa de juego activa
+        // Obtenemos la capa de juego actual
         auto playLayer = PlayLayer::get();
         
         if (playLayer) {
             bool requiereCorreccion = false;
-            int tickPerfectoCalculado = tickOriginal;
 
-            // Simulamos el futuro inmediato según la INTENSIDAD elegida
+            // 2. LÓGICA DE PREDICCIÓN ACTUALIZADA (2.2)
+            // Simulamos el trayecto del jugador hacia el futuro cuadro por cuadro
             for (int i = 0; i <= intensidadTicks; i++) {
-                // Usamos 'this->' porque ahora estamos dentro de PlayerObject
-                double simX = this->m_position.x + (this->m_xVelocity * i);
+                // En la 2.2 la velocidad horizontal es 'm_playerSpeed' y la vertical es 'm_yVelocity'
+                double simX = this->m_position.x + (this->m_playerSpeed * i);
                 double simY = this->m_position.y + (this->m_yVelocity * i);
 
-                // Comprobamos la colisión hipotética en la PlayLayer
+                // Comprobamos si el jugador colisionaría con un objeto peligroso en esa posición futura
                 bool chocaConObstaculo = playLayer->checkCollisions(this, simX, simY);
 
                 if (chocaConObstaculo) {
                     requiereCorreccion = true;
-                    tickPerfectoCalculado = tickOriginal + (i - 1);
                     break; 
                 }
             }
 
-            if (requiereCorreccion && tickPerfectoCalculado != tickOriginal) {
-                // Registro de depuración en la consola de Geode
-                log::info("Simulación: Clic corregido. Ajustado de tick {} al tick seguro {}", tickOriginal, tickPerfectoCalculado);
+            // 3. RESPUESTA ANTE CORRECCIÓN
+            if (requiereCorreccion) {
+                // Alertas de depuración internas en la consola del juego
+                log::info("Predicción activa: Ajustando el margen de colisión del input.");
                 
-                // Ejecutamos el botón en el jugador
+                // Forzamos la ejecución segura del botón
                 return PlayerObject::pushButton(button);
             }
         }
 
-        // Si todo es seguro, llamamos a la función original de la 2.2
+        // Si la trayectoria actual es segura, el clic se procesa sin alteraciones
         return PlayerObject::pushButton(button);
     }
 };
