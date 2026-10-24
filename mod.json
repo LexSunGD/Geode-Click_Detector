@@ -20,8 +20,7 @@
             "type": "int",
             "default": 5,
             "min": 0,
-            "max": 15,
-            "control": "slider"
+            "max": 15
         }
     }
 }
