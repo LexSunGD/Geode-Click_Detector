@@ -1,62 +1,55 @@
 #include <Geode/Geode.hpp>
-#include <Geode/modify/GJBaseGameLayer.hpp>
+#include <Geode/modify/PlayerObject.hpp>
+#include <Geode/binding/PlayLayer.hpp>
+#include <Geode/binding/GameLevelManager.hpp>
 
 using namespace geode::prelude;
 
-// Modificamos la función nativa del juego usando las herramientas de Geode
-class $modify(MyCorrectorLayer, GJBaseGameLayer) {
+// Cambiamos el Hook para que afecte directamente al objeto del Jugador
+class $modify(MyPlayerObject, PlayerObject) {
     
-    void pushButton(int player, bool isPush) {
-        // Si el usuario suelta el botón, procesar normalmente
-        if (!isPush) {
-            GJBaseGameLayer::pushButton(player, isPush);
-            return;
-        }
-
+    // En la 2.2, pushButton pertenece a PlayerObject y devuelve un bool
+    bool pushButton(PlayerButton button) {
+        
         // 1. LEER LA INTENSIDAD DESDE EL MOD.JSON EN TIEMPO REAL
-        // Obtenemos el número de ticks guardado en la configuración del menú
         int64_t intensidadTicks = Mod::get()->getSettingValue<int64_t>("intensidad-ticks");
 
         // 2. OBTENER TICK ACTUAL DEL MOTOR DE FÍSICAS (240Hz)
         int tickOriginal = GameLevelManager::sharedState()->getPhysicsTick();
 
-        // 3. LOGICA DE SIMULACIÓN (Prototipo educativo)
-        bool requiereCorreccion = false;
-        int tickPerfectoCalculado = tickOriginal;
-
+        // Obtenemos la capa de juego activa
         auto playLayer = PlayLayer::get();
-        if (playLayer && playLayer->m_player1) {
-            PlayerObject* jugador = playLayer->m_player1;
+        
+        if (playLayer) {
+            bool requiereCorreccion = false;
+            int tickPerfectoCalculado = tickOriginal;
 
             // Simulamos el futuro inmediato según la INTENSIDAD elegida
             for (int i = 0; i <= intensidadTicks; i++) {
-                // Cálculo matemático de proyección de hitboxes flotantes
-                double simX = jugador->m_position.x + (jugador->m_xVelocity * i);
-                double simY = jugador->m_position.y + (jugador->m_yVelocity * i);
+                // Usamos 'this->' porque ahora estamos dentro de PlayerObject
+                double simX = this->m_position.x + (this->m_xVelocity * i);
+                double simY = this->m_position.y + (this->m_yVelocity * i);
 
-                // Comprobamos de forma hipotética si choca en ese espacio
-                bool chocaConObstaculo = playLayer->checkCollisions(jugador, simX, simY);
+                // Comprobamos la colisión hipotética en la PlayLayer
+                bool chocaConObstaculo = playLayer->checkCollisions(this, simX, simY);
 
                 if (chocaConObstaculo) {
                     requiereCorreccion = true;
-                    // Movemos el input al frame seguro inmediatamente anterior al choque
                     tickPerfectoCalculado = tickOriginal + (i - 1);
                     break; 
                 }
             }
+
+            if (requiereCorreccion && tickPerfectoCalculado != tickOriginal) {
+                // Registro de depuración en la consola de Geode
+                log::info("Simulación: Clic corregido. Ajustado de tick {} al tick seguro {}", tickOriginal, tickPerfectoCalculado);
+                
+                // Ejecutamos el botón en el jugador
+                return PlayerObject::pushButton(button);
+            }
         }
 
-        // 4. EJECUCIÓN
-        if (requiereCorreccion && tickPerfectoCalculado != tickOriginal) {
-            // Log en consola de Geode para debuggear el viaje en el tiempo del tick
-            log::info("Clic corregido! Movido de tick {} a tick {}", tickOriginal, tickPerfectoCalculado);
-            
-            // Aquí el inyector fuerza al motor a retrasar el salto hasta el 'tickPerfectoCalculado'
-            // En este prototipo base, dejamos pasar el flujo controlado
-            GJBaseGameLayer::pushButton(player, isPush);
-        } else {
-            // Si el clic del usuario era seguro, se ejecuta sin tocar la memoria
-            GJBaseGameLayer::pushButton(player, isPush);
-        }
+        // Si todo es seguro, llamamos a la función original de la 2.2
+        return PlayerObject::pushButton(button);
     }
 };
