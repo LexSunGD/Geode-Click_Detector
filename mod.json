@@ -1,26 +1,33 @@
 {
 	"geode": "5.11.2",
 	"gd": {
-		"win": "2.2081",
-		"android": "2.2081",
-		"mac": "2.2081",
-		"ios": "2.2081"
+		"win": "2.2091",
+		"android": "2.2091",
+		"mac": "2.2091",
+		"ios": "2.2091"
 	},
-	"id": "lexsungd.click_detector",
+	"id": "lexsungd.basics_mods",
 	"version": "1.0.0",
-	"name": "Click Detector",
+	"name": "Basics Mods",
 	"developer": "LexSunGD",
-	"description": "description",
-	"repository": "githubcom",
+	"description": "Basics Geometry Dash Mods.",
+	"repository": "https://github.com/LexSunGD/Geode-Basics_Mods",
 	"tags": [],
 	"settings": {
-        "intensidad-ticks": {
-            "name": "Intensidad",
-            "description": "Margen de ticks",
-            "type": "int",
-            "default": 5,
-            "min": 0,
-            "max": 15
-        }
-    }
+		"noclip-enabled": {
+            "name": "Activar Noclip",
+            "type": "bool",
+            "default": false
+		},
+        "bypass-icons": {
+            "name": "Icon Bypass",
+            "type": "bool",
+            "default": true
+		},
+	    "bypass-text": {
+            "name": "Text Bypass",
+            "type": "bool",
+            "default": false
+		}
+	}
 }
