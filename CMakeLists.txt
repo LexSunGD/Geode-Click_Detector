@@ -8,10 +8,12 @@ else()
 endif()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-project(ClickDetector VERSION 1.0.0)
+project(BasicsMods VERSION 1.0.0)
 
 add_library(${PROJECT_NAME} SHARED
-    src/main.cpp
+    src/Noclip.cpp
+    src/IconBypass.cpp
+    src/TextBypass.cpp
     # Add any extra C++ source files here
 )
 
